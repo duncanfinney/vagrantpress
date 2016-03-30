@@ -1,0 +1,48 @@
+{
+  "name": "wordpress-test-env",
+  "version": "1.0.0",
+  "description": "*VagrantPress* is a packaged development environment for developing WordPress themes and modules.   I initially created this project to aid in developing child modules for a WordPress blog.",
+  "main": "postcss-options.js",
+  "dependencies": {
+    "autoprefixer": "^6.3.5",
+    "lodash": "^4.6.1",
+    "lost": "^6.7.2",
+    "parallelshell": "^2.0.0",
+    "postcss": "^5.0.19",
+    "postcss-calc": "^5.2.0",
+    "postcss-cli": "^2.5.1",
+    "postcss-color-function": "^2.0.1",
+    "postcss-custom-media": "^5.0.1",
+    "postcss-custom-properties": "^5.0.0",
+    "postcss-import": "^8.0.2",
+    "postcss-inline-comment": "^2.0.0",
+    "postcss-loader": "^0.8.2",
+    "postcss-nested": "^1.0.0",
+    "postcss-scss": "^0.1.7",
+    "postcss-simple-vars": "^1.2.0",
+    "postcss-url": "^5.1.1",
+    "tiny-lr": "^0.2.1",
+    "watch": "^0.17.1",
+    "watch-run": "^1.2.4",
+    "yargs": "^4.3.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "vagrant up && npm run build && npm run watch:all",
+    "build": "./build-tasks/build-all",
+    "new-theme": "./build-tasks/new-theme",
+    "watch:all": "./node_modules/.bin/parallelshell \"npm run watch:test\" \"npm run watch:test2\" \"node ./livereload.js\" \"./node_modules/.bin/watch-run -p 'themes/**/*.php' 'curl http://localhost:35729/changed?files=index.php'\"",
+    "build:test": "./node_modules/.bin/postcss -c postcss-options.js -o themes/test/style.css themes/test/css/style.css",
+    "watch:test": "./node_modules/.bin/watch-run -p 'themes/test/css/*.css' 'npm run build:test && curl http://localhost:35729/changed?files=wp-content/themes/test/style.css'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vagrantpress/vagrantpress.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vagrantpress/vagrantpress/issues"
+  },
+  "homepage": "https://github.com/vagrantpress/vagrantpress#readme"
+}

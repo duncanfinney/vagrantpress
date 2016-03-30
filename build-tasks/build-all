@@ -1,0 +1,5 @@
+#!/bin/bash
+cd themes
+for theme in *; do
+  npm run "build:$theme"
+done;

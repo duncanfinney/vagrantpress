@@ -1,0 +1,51 @@
+#!/bin/sh
+echo "Enter theme name: "
+read THEME_NAME
+
+rm -rf tmp
+git clone https://github.com/toddmotto/html5blank tmp
+
+#clean up the theme some
+cat tmp/src/css/banner.css tmp/src/css/sass/style.scss >> tmp.scss
+rm -rf tmp/src/css/sass/style.scss
+cp tmp.scss tmp/src/css/sass/style.scss
+rm -rf tmp.scss tmp/src/css/style.css tmp/src/css/banner.css
+
+#get rid fo the extra sass folder
+mv tmp/src/css/sass/* tmp/src/css
+rm -rf tmp/src/css/sass
+
+#rename all the scss to css
+cd tmp
+find . |  grep \.scss$ | sed 'p;s/\.scss/\.css/' | xargs -n2 mv
+cd ..
+
+# update the theme name
+perl -pi -e "s/HTML5 Blank/$THEME_NAME/g" tmp/src/css/style.css
+perl -pi -e "s/HTML5 Blank/$THEME_NAME/g" tmp/src/style.css
+
+mkdir -p "themes/$THEME_NAME"
+cp -r tmp/src/* "themes/$THEME_NAME"
+rm -rf tmp/
+vagrant up
+vagrant ssh -c "ln -s /vagrant/themes/$THEME_NAME /vagrant/wordpress/wp-content/themes/$THEME_NAME"
+
+# add it to the package.json
+node -e "
+var fs = require('fs');
+var packageJson = require('./package.json');
+packageJson.scripts = packageJson.scripts || {};
+packageJson.scripts[\"build:$THEME_NAME\"] = \"./node_modules/.bin/postcss -c postcss-options.js -o themes/$THEME_NAME/style.css themes/$THEME_NAME/css/style.css\";
+packageJson.scripts[\"watch:$THEME_NAME\"] = \"./node_modules/.bin/watch-run -p 'themes/$THEME_NAME/css/*.css' 'npm run build:$THEME_NAME && curl http://localhost:35729/changed\?files\=wp-content/themes/$THEME_NAME/style.css'\";
+
+var themes = fs.readdirSync('./themes');
+var watchCommands = themes.map(function(t) {
+  return JSON.stringify(\"npm run watch:\" + t);
+})
+.concat(JSON.stringify('node ./livereload.js'))
+.concat(JSON.stringify(\"./node_modules/.bin/watch-run -p 'themes/**/*.php' 'curl http://localhost:35729/changed\?files\=index.php'\"))
+
+packageJson.scripts[\"watch:all\"] = \"./node_modules/.bin/parallelshell \" + watchCommands.join(' ');
+
+fs.writeFileSync('package.json', JSON.stringify(packageJson, null, '  '), 'UTF-8');
+"
